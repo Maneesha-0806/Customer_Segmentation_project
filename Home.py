@@ -250,24 +250,29 @@ def generate_ai_insights(data):
 
     """
 
-    completion = client.chat.completions.create(
+    try:
 
-        model="llama3-70b-8192",
+        completion = client.chat.completions.create(
 
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
+            model="llama-3.3-70b-versatile",
 
-        temperature=0.5,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
 
-        max_tokens=500
-    )
+            temperature=0.5,
 
-    return completion.choices[0].message.content
-# ---------------------------------------------------
+            max_tokens=500
+        )
+
+        return completion.choices[0].message.content
+
+    except Exception as e:
+
+        return f"AI Insights Error: {str(e)}"# ---------------------------------------------------
 # PAGE TITLE
 # ---------------------------------------------------
 
