@@ -195,7 +195,7 @@ if st.sidebar.button("Reset Filters"):
 # ---------------------------------------------------
 # AI INSIGHTS FUNCTION
 # ---------------------------------------------------
-
+@st.cache_data(show_spinner=False)
 def generate_ai_insights(data):
 
     total_customers = len(data)
