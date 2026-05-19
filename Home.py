@@ -69,10 +69,14 @@ header {visibility: hidden;}
 # LOAD DATA
 # ---------------------------------------------------
 
-rfm = pd.read_csv(
-    "outputs/clustered_customers.csv"
-)
+@st.cache_data
+def load_data():
 
+    return pd.read_csv(
+        "outputs/clustered_customers.csv"
+    )
+
+filtered_df = load_data()
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
@@ -90,7 +94,95 @@ Analyze:
 - CLV
 - Business Insights
 """)
+# ---------------------------------------------------
+# SIDEBAR FILTERS
+# ---------------------------------------------------
 
+st.sidebar.header("🔍 Filter Dashboard")
+
+# --------------------------------
+# PERSONA FILTER
+# --------------------------------
+
+selected_persona = st.sidebar.multiselect(
+    "Select Persona",
+
+    options=filtered_df['Persona'].unique(),
+
+    default=filtered_df['Persona'].unique()
+)
+
+# --------------------------------
+# COUNTRY FILTER
+# --------------------------------
+
+selected_country = st.sidebar.multiselect(
+    "Select Country",
+
+    options=sorted(
+        filtered_df['Country'].unique()
+    ),
+
+    default=sorted(
+        filtered_df['Country'].unique()
+    )
+)
+
+# --------------------------------
+# REVENUE FILTER
+# --------------------------------
+
+min_revenue = int(
+    filtered_df['Monetary'].min()
+)
+
+max_revenue = int(
+    filtered_df['Monetary'].max()
+)
+
+selected_revenue = st.sidebar.slider(
+    "Revenue Range",
+
+    min_value=min_revenue,
+
+    max_value=max_revenue,
+
+    value=(
+        min_revenue,
+        max_revenue
+    )
+)
+# ---------------------------------------------------
+# FILTER DATA
+# ---------------------------------------------------
+
+filtered_df = filtered_df[
+
+    (filtered_df['Persona'].isin(selected_persona))
+
+    &
+
+    (filtered_df['Country'].isin(selected_country))
+
+    &
+
+    (
+        filtered_df['Monetary']
+        .between(
+            selected_revenue[0],
+            selected_revenue[1]
+        )
+    )
+
+]
+st.sidebar.markdown("### 📌 Active Filters")
+
+st.sidebar.write(
+    f"Customers Selected: {len(filtered_df)}"
+)
+if st.sidebar.button("Reset Filters"):
+
+    st.rerun()
 # ---------------------------------------------------
 # PAGE TITLE
 # ---------------------------------------------------
@@ -109,18 +201,18 @@ st.divider()
 # KPI VALUES
 # ---------------------------------------------------
 
-total_customers = len(rfm)
+total_customers = len(filtered_df)
 
 total_revenue = round(
-    rfm['Monetary'].sum(), 2
+    filtered_df['Monetary'].sum(), 2
 )
 
 avg_frequency = round(
-    rfm['Frequency'].mean(), 2
+    filtered_df['Frequency'].mean(), 2
 )
 
 avg_clv = round(
-    rfm['CLV'].mean(), 2
+    filtered_df['CLV'].mean(), 2
 )
 
 # ---------------------------------------------------
@@ -189,7 +281,7 @@ with col5:
 with col6:
 
     persona_counts = (
-        rfm['Persona']
+        filtered_df['Persona']
         .value_counts()
     )
 
@@ -225,7 +317,7 @@ col7, col8, col9 = st.columns(3)
 with col7:
 
     fig1 = px.histogram(
-        rfm,
+        filtered_df,
         x='Recency',
         template='plotly_dark',
         title='Recency Distribution'
@@ -239,7 +331,7 @@ with col7:
 with col8:
 
     fig2 = px.histogram(
-        rfm,
+        filtered_df,
         x='Frequency',
         template='plotly_dark',
         title='Frequency Distribution'
@@ -253,7 +345,7 @@ with col8:
 with col9:
 
     fig3 = px.histogram(
-        rfm,
+        filtered_df,
         x='Monetary',
         template='plotly_dark',
         title='Monetary Distribution'
@@ -273,7 +365,7 @@ st.divider()
 st.subheader("👥 Customer Segmentation")
 
 fig4 = px.scatter(
-    rfm,
+    filtered_df,
     x='Frequency',
     y='Monetary',
     color='Persona',
@@ -294,7 +386,7 @@ st.plotly_chart(
 st.subheader("🌍 3D Customer Segmentation")
 
 fig5 = px.scatter_3d(
-    rfm,
+    filtered_df,
     x='Recency',
     y='Frequency',
     z='Monetary',
@@ -315,7 +407,7 @@ st.divider()
 
 st.subheader("📉 Elbow Method")
 
-features = rfm[
+features = filtered_df[
     ['Recency','Frequency','Monetary']
 ]
 
@@ -365,7 +457,7 @@ st.subheader("🔥 Correlation Heatmap")
 fig, ax = plt.subplots(figsize=(10,5))
 
 sns.heatmap(
-    rfm[
+    filtered_df[
         ['Recency','Frequency','Monetary','CLV']
     ].corr(),
     annot=True,
@@ -383,7 +475,7 @@ st.divider()
 
 st.subheader("🏆 Top Customers")
 
-top_customers = rfm.sort_values(
+top_customers = filtered_df.sort_values(
     by='Monetary',
     ascending=False
 ).head(10)
@@ -402,7 +494,7 @@ st.divider()
 st.subheader("💡 Business Insights")
 
 best_cluster = (
-    rfm.groupby('Cluster')['Monetary']
+    filtered_df.groupby('Cluster')['Monetary']
     .mean()
     .idxmax()
 )
@@ -412,9 +504,9 @@ Cluster {best_cluster}
 generates the highest revenue.
 """)
 
-churn_risk = rfm[
-    rfm['Recency']
-    > rfm['Recency'].mean()
+churn_risk = filtered_df[
+    filtered_df['Recency']
+    > filtered_df['Recency'].mean()
 ]
 
 st.warning(f"""
@@ -422,8 +514,8 @@ st.warning(f"""
 are at risk of churn.
 """)
 
-vip_revenue = rfm[
-    rfm['Persona']
+vip_revenue = filtered_df[
+    filtered_df['Persona']
     == 'VIP Customers'
 ]['Monetary'].sum()
 
@@ -450,7 +542,7 @@ st.divider()
 
 st.subheader("⬇ Download Report")
 
-csv = rfm.to_csv(index=False)
+csv = filtered_df.to_csv(index=False)
 
 st.download_button(
     label="Download Customer Segments",
