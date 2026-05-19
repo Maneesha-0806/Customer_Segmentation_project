@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
+from groq import Groq
 
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -77,6 +78,13 @@ def load_data():
     )
 
 filtered_df = load_data()
+# ---------------------------------------------------
+# GROQ CLIENT
+# ---------------------------------------------------
+
+client = Groq(
+    api_key=st.secrets["GROQ_API_KEY"]
+)
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
@@ -183,6 +191,82 @@ st.sidebar.write(
 if st.sidebar.button("Reset Filters"):
 
     st.rerun()
+
+# ---------------------------------------------------
+# AI INSIGHTS FUNCTION
+# ---------------------------------------------------
+
+def generate_ai_insights(data):
+
+    total_customers = len(data)
+
+    total_revenue = round(
+        data['Monetary'].sum(), 2
+    )
+
+    avg_clv = round(
+        data['CLV'].mean(), 2
+    )
+
+    top_persona = (
+        data.groupby('Persona')['Monetary']
+        .sum()
+        .idxmax()
+    )
+
+    churn_risk = len(
+        data[
+            data['Recency']
+            > data['Recency'].mean()
+        ]
+    )
+
+    prompt = f"""
+
+    You are a business analyst.
+
+    Analyze this customer analytics data
+    and provide concise business insights.
+
+    Metrics:
+
+    Total Customers: {total_customers}
+
+    Total Revenue: {total_revenue}
+
+    Average CLV: {avg_clv}
+
+    Top Persona: {top_persona}
+
+    Customers at Churn Risk: {churn_risk}
+
+    Provide:
+    1. Key findings
+    2. Risks
+    3. Marketing recommendations
+    4. Revenue optimization ideas
+
+    Keep response concise and professional.
+
+    """
+
+    completion = client.chat.completions.create(
+
+        model="llama3-70b-8192",
+
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+
+        temperature=0.5,
+
+        max_tokens=500
+    )
+
+    return completion.choices[0].message.content
 # ---------------------------------------------------
 # PAGE TITLE
 # ---------------------------------------------------
@@ -535,6 +619,29 @@ st.markdown("""
 """)
 
 st.divider()
+# ---------------------------------------------------
+# AI INSIGHTS
+# ---------------------------------------------------
+
+st.divider()
+
+st.subheader("🤖 AI Business Insights")
+
+if st.button("Generate AI Insights"):
+
+    with st.spinner(
+        "Analyzing customer data..."
+    ):
+
+        insights = generate_ai_insights(
+            filtered_df
+        )
+
+        st.success(
+            "AI Analysis Complete!"
+        )
+
+        st.markdown(insights)
 
 # ---------------------------------------------------
 # DOWNLOAD REPORT
