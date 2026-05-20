@@ -217,6 +217,16 @@ groq
 
 ---
 
+# 📸 Screenshots
+
+<img width="1918" height="966" alt="image" src="https://github.com/user-attachments/assets/58d58424-a2e9-4463-92d4-97567efbe5c1" />
+<img width="1500" height="668" alt="image" src="https://github.com/user-attachments/assets/bd0b60f0-638a-4e5b-855b-4b00dc4ae31a" />
+<img width="1492" height="631" alt="image" src="https://github.com/user-attachments/assets/c15f9cb8-648e-4b0b-b3db-df5a3f5da5c3" />
+<img width="1467" height="591" alt="image" src="https://github.com/user-attachments/assets/60051fd0-49f0-4d81-b014-c4854753c8c5" />
+<img width="1542" height="826" alt="image" src="https://github.com/user-attachments/assets/1117c404-86bf-4d6b-994f-20f33204ad1e" />
+
+---
+
 # Deployment
 
 The application is deployed using:
